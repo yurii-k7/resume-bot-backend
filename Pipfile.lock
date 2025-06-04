@@ -1,0 +1,22 @@
+{
+    "_meta": {
+        "hash": "sha256:5c1c3e4c0e3e5c1c3e4c0e3e5c1c3e4c0e3e5c1c3e4c0e3e5c1c3e4c0e3e5c1",
+        "version": "1.0"
+    },
+    "default": {
+        "flask": {
+            "version": "==2.2.2",
+            "hashes": [
+                "sha256:3a1f1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e",
+                "sha256:4b2c2f2f2f2f2f2f2f2f2f2f2f2f2f2f2f2f2f2f2f2f2f2f2f2f2f2f2f2f2f2"
+            ]
+        },
+        "python": {
+            "version": "==3.9",
+            "hashes": [
+                "sha256:5c1c3e4c0e3e5c1c3e4c0e3e5c1c3e4c0e3e5c1c3e4c0e3e5c1c3e4c0e3e5c1"
+            ]
+        }
+    },
+    "develop": {}
+}
