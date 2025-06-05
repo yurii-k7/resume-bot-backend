@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+from answer import answer
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
@@ -8,7 +9,7 @@ CORS(app)  # Enable CORS for all routes
 def question():
     data = request.json
     response = {
-        "answer": "42",
+        "answer": answer(data.get("question", ""))
     }
     return response, 200
 

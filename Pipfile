@@ -6,6 +6,15 @@ name = "pypi"
 [packages]
 flask = "*"
 flask_cors = "*"
+langchain = "*"
+langchain-openai = "*"
+langchain-pinecone = "*"
+python-dotenv = "*"
+langchainhub = "*"
+black = "*"
+langchain-community = "*"
+pypdf = "*"
+faiss-cpu = "*"
 
 [requires]
 python_version = "3.12"
