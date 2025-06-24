@@ -16,6 +16,7 @@ RUN pipenv install --deploy --ignore-pipfile
 
 # Copy the rest of the code
 COPY src ./src
+COPY faiss_index ./faiss_index
 
 # Expose port
 EXPOSE 8081
