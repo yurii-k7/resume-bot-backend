@@ -1,0 +1,66 @@
+# Use the official AWS Lambda Python runtime
+FROM public.ecr.aws/lambda/python:3.11
+
+# Install system dependencies in one layer
+RUN yum update -y && \
+    yum install -y gcc g++ make cmake git pkgconfig openblas-devel lapack-devel swig && \
+    yum clean all && \
+    rm -rf /var/cache/yum
+
+# Upgrade pip and install wheel
+RUN pip install --upgrade pip wheel setuptools
+
+# Set environment variables for better builds
+ENV PYTHONUNBUFFERED=1
+ENV PIP_NO_CACHE_DIR=1
+ENV PIP_PREFER_BINARY=1
+
+# Install core numeric packages first (they take longest and are most stable)
+RUN pip install --no-cache-dir \
+    numpy==1.26.4 \
+    scipy
+
+# Try multiple approaches to install faiss-cpu (it's the most problematic)
+RUN pip install --prefer-binary --no-cache-dir faiss-cpu==1.11.0 || \
+    pip install --no-cache-dir faiss-cpu==1.8.0 || \
+    pip install --no-cache-dir --no-binary faiss-cpu faiss-cpu || \
+    echo "Warning: faiss-cpu installation failed, will try alternative approach"
+
+# Install remaining core packages
+RUN pip install --no-cache-dir \
+    scikit-learn \
+    openai==1.84.0 \
+    tiktoken==0.9.0
+
+# Install LangChain packages
+RUN pip install --no-cache-dir \
+    langchain==0.3.25 \
+    langchain-community==0.3.24 \
+    langchain-core==0.3.63 \
+    langchain-openai==0.3.19 \
+    langchain-text-splitters==0.3.8 \
+    langchainhub==0.1.21 \
+    langsmith==0.3.45
+
+# Install remaining dependencies
+RUN pip install --no-cache-dir \
+    flask==3.1.1 \
+    flask-cors==6.0.0 \
+    python-dotenv==1.1.0 \
+    pypdf==5.6.0 \
+    requests==2.32.3 \
+    pydantic==2.11.5 \
+    pydantic-core==2.33.2 \
+    pydantic-settings==2.9.1 \
+    tenacity==9.1.2 \
+    typing-extensions==4.14.0 \
+    boto3==1.35.79
+
+# Copy application code
+COPY src/ ${LAMBDA_TASK_ROOT}/src/
+COPY lambda_handler.py ${LAMBDA_TASK_ROOT}/
+COPY resume.pdf ${LAMBDA_TASK_ROOT}/
+COPY faiss_index/ ${LAMBDA_TASK_ROOT}/faiss_index/
+
+# Set the CMD to your handler
+CMD ["lambda_handler.lambda_handler"]
