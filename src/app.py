@@ -1,12 +1,14 @@
-from flask import Flask, request, jsonify
-from flask_cors import CORS
-from answer import answer
+"""Flask API for Resume Bot backend."""
 import json
 import logging
+import os
 import time
 import uuid
 from datetime import datetime
-import os
+
+from flask import Flask, request, jsonify
+from flask_cors import CORS
+from answer import answer
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
@@ -22,85 +24,90 @@ logger = logging.getLogger(__name__)
 chatbot_logger = logging.getLogger('chatbot_interactions')
 chatbot_logger.setLevel(logging.INFO)
 
-def log_chatbot_interaction(session_id, question, answer_text, response_time, success=True, error=None):
+def log_chatbot_interaction(session_id, user_question, answer_text, response_time,
+                          success=True):
     """Log detailed chatbot interaction data"""
     interaction_data = {
         "timestamp": datetime.utcnow().isoformat(),
         "session_id": session_id,
-        "question": question,
+        "question": user_question,
         "answer": answer_text,
         "response_time_ms": response_time,
         "success": success,
-        "error": error,
+        "error": None,
         "user_agent": request.headers.get('User-Agent', ''),
         "ip_address": request.remote_addr,
         "environment": os.getenv('FLASK_ENV', 'development')
     }
-    
+
     # Log as structured JSON for easy parsing by CloudWatch
     chatbot_logger.info(json.dumps(interaction_data))
-    
+
     # Also log basic metrics
-    logger.info(f"CHATBOT_INTERACTION - Session: {session_id}, ResponseTime: {response_time}ms, Success: {success}")
+    logger.info("CHATBOT_INTERACTION - Session: %s, ResponseTime: %sms, Success: %s",
+                session_id, response_time, success)
 
 @app.route('/question', methods=['POST'])
 def question():
+    """Handle question requests from users."""
     start_time = time.time()
     session_id = str(uuid.uuid4())
     question_text = ""
     answer_text = ""
-    
+
     try:
-        logger.info(f"Received question request - Session: {session_id}")
-        
+        logger.info("Received question request - Session: %s", session_id)
+
         data = request.json
         if not data:
             raise ValueError("No JSON data provided")
-            
+
         question_text = data.get("question", "")
         if not question_text:
             raise ValueError("No question provided")
-            
-        logger.info(f"Processing question - Session: {session_id}, Question length: {len(question_text)}")
-        
+
+        logger.info("Processing question - Session: %s, Question length: %d",
+                    session_id, len(question_text))
+
         # Process the question
         answer_text = answer(question_text)
-        
+
         response_time = int((time.time() - start_time) * 1000)
-        
+
         # Log successful interaction
         log_chatbot_interaction(
             session_id=session_id,
-            question=question_text,
+            user_question=question_text,
             answer_text=answer_text,
             response_time=response_time,
             success=True
         )
-        
+
         response = {
             "answer": answer_text,
             "session_id": session_id
         }
-        
-        logger.info(f"Successfully processed question - Session: {session_id}, ResponseTime: {response_time}ms")
+
+        logger.info("Successfully processed question - Session: %s, ResponseTime: %sms",
+                    session_id, response_time)
         return response, 200
-        
-    except Exception as e:
+
+    except Exception as e:  # pylint: disable=broad-exception-caught
         response_time = int((time.time() - start_time) * 1000)
         error_message = str(e)
-        
+
         # Log failed interaction
         log_chatbot_interaction(
             session_id=session_id,
-            question=question_text,
+            user_question=question_text,
             answer_text="",
             response_time=response_time,
-            success=False,
-            error=error_message
+            success=False
         )
-        
-        logger.error(f"Error processing question - Session: {session_id}, Error: {error_message}")
-        
+
+        logger.error("Error processing question - Session: %s, Error: %s",
+                     session_id, error_message)
+
         return jsonify({
             "error": "Failed to process question",
             "session_id": session_id
@@ -118,17 +125,22 @@ def health():
 
 @app.route('/')
 def root():
+    """Root endpoint handler."""
     logger.info("Root endpoint accessed")
     return "Resume Bot API - Ready", 200
 
 # Add request logging middleware
 @app.before_request
 def log_request_info():
-    logger.info(f"Request: {request.method} {request.url} - IP: {request.remote_addr}")
+    """Log incoming request information."""
+    logger.info("Request: %s %s - IP: %s",
+                request.method, request.url, request.remote_addr)
 
 @app.after_request
 def log_response_info(response):
-    logger.info(f"Response: {response.status_code} - {request.method} {request.url}")
+    """Log outgoing response information."""
+    logger.info("Response: %s - %s %s",
+                response.status_code, request.method, request.url)
     return response
 
 if __name__ == '__main__':

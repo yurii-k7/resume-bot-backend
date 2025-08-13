@@ -1,21 +1,28 @@
-from langchain_community.document_loaders import PyPDFLoader
-from langchain_text_splitters import CharacterTextSplitter
-from langchain_openai import OpenAIEmbeddings, OpenAI
-from langchain_community.vectorstores import FAISS
-from langchain.chains.retrieval import create_retrieval_chain
-from langchain.chains.combine_documents import create_stuff_documents_chain
-from langchain import hub
-from langchain.prompts import PromptTemplate
-
+"""Resume-based question answering using LangChain and FAISS."""
 from dotenv import load_dotenv
+from langchain.prompts import PromptTemplate
+from langchain.chains.combine_documents import create_stuff_documents_chain
+from langchain.chains.retrieval import create_retrieval_chain
+from langchain_community.vectorstores import FAISS
+from langchain_openai import OpenAI, OpenAIEmbeddings
 load_dotenv()
 
 INDEX_DIR = "faiss_index"
 
-def answer(question):
+def answer(user_question):
+    """Answer a question based on the resume information in the vector store.
+    
+    Args:
+        user_question (str): The question to answer
+        
+    Returns:
+        str: The answer based on the resume context
+    """
     embeddings = OpenAIEmbeddings()
 
-    vectorstore = FAISS.load_local(INDEX_DIR, embeddings, allow_dangerous_deserialization=True)
+    vectorstore = FAISS.load_local(
+        INDEX_DIR, embeddings, allow_dangerous_deserialization=True
+    )
 
     prompt_template = """
         You are a helpful assistant. You will be given a resume and a question.
@@ -46,11 +53,11 @@ def answer(question):
         vectorstore.as_retriever(), combine_docs_chain
     )
 
-    res = retrieval_chain.invoke({"input": question})
+    res = retrieval_chain.invoke({"input": user_question})
     return res["answer"]
 
 if __name__ == "__main__":
     # Example usage
-    question = "What is the candidate's experience with AI?"
-    answer_text = answer(question)
+    EXAMPLE_QUESTION = "What is the candidate's experience with AI?"
+    answer_text = answer(EXAMPLE_QUESTION)
     print(answer_text)
