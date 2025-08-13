@@ -29,6 +29,10 @@ jobs:
       run: |
         pipenv install --dev
         
+    - name: Install pylint
+      run: |
+        pipenv install pylint
+        
     - name: Run pylint with score check
       run: |
         # Run pylint and capture the score
