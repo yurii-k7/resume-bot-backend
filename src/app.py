@@ -133,4 +133,7 @@ def log_response_info(response):
 
 if __name__ == '__main__':
     logger.info("Starting Resume Bot Flask application")
-    app.run(host="0.0.0.0", port=8081)
+    # Use environment variable for host, default to localhost for security
+    host = os.getenv('FLASK_HOST', '127.0.0.1')
+    port = int(os.getenv('FLASK_PORT', '8081'))
+    app.run(host=host, port=port)
