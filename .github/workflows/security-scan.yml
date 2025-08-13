@@ -1,0 +1,69 @@
+name: Security Scan
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+jobs:
+  bandit-scan:
+    name: Bandit Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        
+    - name: Install bandit
+      run: |
+        pip install bandit[toml]
+        
+    - name: Run bandit security scan
+      run: |
+        bandit -r . -f json -o bandit-report.json
+        bandit -r . --severity-level medium
+        
+    - name: Upload bandit report
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: bandit-security-report
+        path: bandit-report.json
+        retention-days: 30
+        
+    - name: Comment PR with security findings
+      if: github.event_name == 'pull_request' && failure()
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          try {
+            const report = JSON.parse(fs.readFileSync('bandit-report.json', 'utf8'));
+            const findings = report.results.length;
+            
+            if (findings > 0) {
+              const comment = `🔒 **Security Scan Results**
+              
+              Bandit found ${findings} potential security issue(s) in the backend code.
+              
+              Please review the security findings and address any high or medium severity issues before merging.
+              
+              Download the full report from the workflow artifacts for detailed information.`;
+              
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: comment
+              });
+            }
+          } catch (error) {
+            console.log('No bandit report found or error reading report:', error.message);
+          }
