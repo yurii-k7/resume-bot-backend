@@ -16,5 +16,8 @@ langchain-community = "*"
 pypdf = "*"
 faiss-cpu = "*"
 
+[dev-packages]
+pylint = "*"
+
 [requires]
 python_version = "3.12"
