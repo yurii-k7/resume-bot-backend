@@ -1,0 +1,26 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  code-quality:
+    name: Code Quality Check
+    uses: ./.github/workflows/code-quality.yml
+
+  security-scan:
+    name: Security Scan
+    uses: ./.github/workflows/security-scan.yml
+
+  build-and-deploy:
+    name: Build and Deploy
+    needs: [code-quality, security-scan]
+    if: success()
+    uses: ./.github/workflows/build-and-deploy.yml
+    with:
+      aws-region: ${{ vars.AWS_REGION || 'ca-central-1' }}
+    secrets:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}

@@ -1,0 +1,77 @@
+name: Build and Deploy
+
+on:
+  workflow_call:
+    inputs:
+      aws-region:
+        description: 'AWS region to deploy to'
+        required: false
+        default: 'ca-central-1'
+        type: string
+    secrets:
+      AWS_ACCESS_KEY_ID:
+        description: 'AWS Access Key ID'
+        required: true
+      AWS_SECRET_ACCESS_KEY:
+        description: 'AWS Secret Access Key'
+        required: true
+
+jobs:
+  build-and-deploy:
+    name: Build and Deploy to AWS
+    runs-on: ubuntu-latest
+    
+    environment: prod
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ inputs.aws-region }}
+        
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      
+    - name: Make scripts executable
+      run: |
+        chmod +x scripts/build-and-push.sh
+        chmod +x scripts/deploy-latest-image.sh
+        
+    - name: Build and push Docker image to ECR
+      run: |
+        cd ${{ github.workspace }}
+        export AWS_REGION=${{ inputs.aws-region }}
+        ./scripts/build-and-push.sh
+        
+    - name: Deploy latest image to Lambda
+      run: |
+        cd ${{ github.workspace }}
+        export AWS_REGION=${{ inputs.aws-region }}
+        ./scripts/deploy-latest-image.sh
+        
+    - name: Deployment summary
+      if: success()
+      run: |
+        echo "🎉 Deployment completed successfully!"
+        echo "✅ Code quality check passed"
+        echo "✅ Security scan passed"
+        echo "✅ Docker image built and pushed to ECR"
+        echo "✅ Lambda function updated with latest image"
+        echo ""
+        echo "Your Resume Bot backend is now running the latest version!"
+        
+    - name: Notify on failure
+      if: failure()
+      run: |
+        echo "❌ Deployment failed!"
+        echo "Please check the workflow logs for details."
+        echo "Common issues:"
+        echo "  - AWS credentials not configured properly"
+        echo "  - ECR repository permissions"
+        echo "  - Lambda function not found"
+        echo "  - Network connectivity issues"
