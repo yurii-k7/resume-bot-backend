@@ -17,7 +17,6 @@ ENV PIP_PREFER_BINARY=1
 # Copy application code
 COPY src/ ${LAMBDA_TASK_ROOT}/src/
 COPY lambda_handler.py ${LAMBDA_TASK_ROOT}/
-COPY resume.pdf ${LAMBDA_TASK_ROOT}/
 COPY faiss_index/ ${LAMBDA_TASK_ROOT}/faiss_index/
 
 # Set the CMD to your handler
