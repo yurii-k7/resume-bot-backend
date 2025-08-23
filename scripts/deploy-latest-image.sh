@@ -5,6 +5,9 @@
 
 set -e
 
+# Change to the directory where this script is located
+cd "$(dirname "${BASH_SOURCE[0]}")"
+
 # Configuration
 AWS_REGION=${AWS_REGION:-"ca-central-1"}
 ECR_REPOSITORY="resume-bot/backend-lambda"
