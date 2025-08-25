@@ -45,13 +45,13 @@ jobs:
     - name: Build and push Docker image to ECR
       run: |
         cd ${{ github.workspace }}
-        export AWS_REGION=${{ inputs.aws-region }}
+        export AWS_REGION=${{ inputs.AWS_REGION }}
         ./scripts/build-and-push.sh
         
     - name: Deploy latest image to Lambda
       run: |
         cd ${{ github.workspace }}
-        export AWS_REGION=${{ inputs.aws-region }}
+        export AWS_REGION=${{ inputs.AWS_REGION }}
         ./scripts/deploy-latest-image.sh
         
     - name: Deployment summary
